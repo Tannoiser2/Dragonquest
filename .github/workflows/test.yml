@@ -4,9 +4,14 @@ on:
   push:
   workflow_dispatch:
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Scarica Godot 4.7.2
@@ -18,7 +23,7 @@ jobs:
         run: ./godot --headless --path . --import 2>&1 | tail -20 || true
       - name: Test headless (esempi del manuale + 30 partite IA)
         run: |
-          ./godot --headless --path . res://tests/Test.tscn 2>&1 | tee test.log
+          timeout 300 ./godot --headless --path . res://tests/Test.tscn 2>&1 | tee test.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|ERRORE" test.log; then exit 1; fi
           grep -q "ERRORI: 0" test.log
       - name: Controllo glifi
@@ -29,5 +34,5 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
           mkdir -p shot
-          xvfb-run -a -s "-screen 0 1600x900x24" ./godot --path . --rendering-driver opengl3 --resolution 1600x900 res://tests/Screenshot.tscn -- "$PWD/shot" 2>&1 | tail -20 || true
+          timeout 120 xvfb-run -a -s "-screen 0 1600x900x24" ./godot --path . --rendering-driver opengl3 --resolution 1600x900 res://tests/Screenshot.tscn -- "$PWD/shot" 2>&1 | tail -20 || true
           for f in shot/*.png; do echo "===INIZIO $(basename $f)==="; base64 -w 0 "$f"; echo; echo "===FINE==="; done
