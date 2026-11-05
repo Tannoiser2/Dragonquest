@@ -1,0 +1,27 @@
+name: Test regole
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scarica Godot 4.7.2
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q Godot_v4.7.2-stable_linux.x86_64.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+      - name: Importa il progetto
+        run: ./godot --headless --path . --import 2>&1 | tail -20 || true
+      - name: Test headless (esempi del manuale + 30 partite IA)
+        run: |
+          ./godot --headless --path . res://tests/Test.tscn 2>&1 | tee test.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|ERRORE" test.log; then exit 1; fi
+          grep -q "ERRORI: 0" test.log
+      - name: Controllo glifi
+        run: |
+          pip install -q fonttools
+          python3 tools/controlla_glifi.py

@@ -1,3 +1,6 @@
 .godot/
 *.import
 export/
+godot
+*.zip
+test.log
