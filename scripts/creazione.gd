@@ -347,11 +347,13 @@ func _riga_incantesimo(v: Dictionary, generale: bool) -> Control:
 			aggiorna())
 		riga.add_child(chk)
 	var bc = v.get("base_chance", null)
+	if bc != null:
+		bc = int(bc)
 	var testo := "%s  %s%s" % [codice, v.get("nome", v["name"]), ("  [combattimento]" if combat else "")]
 	var l: Label = m.etichetta(testo)
 	l.custom_minimum_size.x = 380
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.tooltip_text = "%s\nBase Chance %s  Moltiplicatore XP %s\n%s" % [v["name"], str(bc) if bc != null else "-", str(v.get("experience_multiple", "-")), String(v.get("effects", v.get("text", ""))).substr(0, 600)]
+	l.tooltip_text = "%s\nBase Chance %s  Moltiplicatore XP %s\n%s" % [v["name"], str(bc) if bc != null else "-", str(int(v["experience_multiple"])) if v.get("experience_multiple") != null else "-", String(v.get("effects", v.get("text", ""))).substr(0, 600)]
 	l.mouse_filter = Control.MOUSE_FILTER_PASS
 	if combat:
 		l.add_theme_color_override("font_color", Color(0.85, 0.70, 0.35))
