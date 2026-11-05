@@ -57,6 +57,7 @@ var opt_collegio: OptionButton
 var opt_scuola: OptionButton
 var lbl_collegio: Label
 var lista_magia: VBoxContainer
+var dettaglio_magia: RichTextLabel
 var num_collegi: Array = [0]
 # abilità
 var lista_abilita: VBoxContainer
@@ -243,7 +244,40 @@ func _scheda_magia() -> Control:
 	v.add_child(lbl_collegio)
 	lista_magia = VBoxContainer.new()
 	v.add_child(lista_magia)
-	return _scorrevole(v)
+	var esterno := VBoxContainer.new()
+	esterno.add_theme_constant_override("separation", 8)
+	var sc: ScrollContainer = _scorrevole(v)
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	esterno.add_child(sc)
+	dettaglio_magia = RichTextLabel.new()
+	dettaglio_magia.bbcode_enabled = true
+	dettaglio_magia.scroll_active = true
+	dettaglio_magia.custom_minimum_size.y = 190
+	dettaglio_magia.text = "[color=#a9a39a]Passa sopra o fai clic su un incantesimo per leggerne la descrizione completa.[/color]"
+	var p: Control = m.pannello(dettaglio_magia)
+	esterno.add_child(p)
+	return esterno
+
+
+func _mostra_voce(v: Dictionary) -> void:
+	var bc = v.get("base_chance", null)
+	var em = v.get("experience_multiple", null)
+	var t := "[b][color=#d8b25a]%s  %s[/color][/b]\n" % [v["code"], v.get("nome", v["name"])]
+	var dati: Array[String] = []
+	dati.append("Base Chance %s" % (str(int(bc)) + "%" if bc != null else "-"))
+	dati.append("Moltiplicatore XP %s" % (str(int(em)) if em != null else "-"))
+	if v.get("portata_it"):
+		dati.append("Portata: " + String(v["portata_it"]))
+	if v.get("durata_it"):
+		dati.append("Durata: " + String(v["durata_it"]))
+	if v.get("resistenza_it"):
+		dati.append("Resistenza: " + String(v["resistenza_it"]))
+	t += "[color=#bdb6a8]" + "   ".join(dati) + "[/color]\n"
+	t += String(v.get("testo_it", v.get("effects", v.get("text", ""))))
+	if v.get("note"):
+		t += "\n[i]" + String(v["note"]) + "[/i]"
+	dettaglio_magia.text = t
+	dettaglio_magia.scroll_to_line(0)
 
 
 func _scheda_abilita() -> Control:
@@ -353,8 +387,12 @@ func _riga_incantesimo(v: Dictionary, generale: bool) -> Control:
 	var l: Label = m.etichetta(testo)
 	l.custom_minimum_size.x = 380
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.tooltip_text = "%s\nBase Chance %s  Moltiplicatore XP %s\n%s" % [v["name"], str(bc) if bc != null else "-", str(int(v["experience_multiple"])) if v.get("experience_multiple") != null else "-", String(v.get("effects", v.get("text", ""))).substr(0, 600)]
+	l.tooltip_text = String(v["name"])
 	l.mouse_filter = Control.MOUSE_FILTER_PASS
+	l.mouse_entered.connect(func(): _mostra_voce(v))
+	l.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventMouseButton and (ev as InputEventMouseButton).pressed:
+			_mostra_voce(v))
 	if combat:
 		l.add_theme_color_override("font_color", Color(0.85, 0.70, 0.35))
 	riga.add_child(l)

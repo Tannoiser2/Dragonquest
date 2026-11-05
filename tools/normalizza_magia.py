@@ -114,6 +114,17 @@ out['casting_rules'] = {
     "xp_cost_91_4": "Experience Multiple x Rank da raggiungere; per incantesimi e rituali generali -5% per ogni punto di MA oltre 15",
     "special_knowledge_learn": {"weeks": "ordinale/2 per eccesso", "sp": "200 x ordinale"},
     "cold_iron_29_1": "Niente incantesimi a contatto con ferro freddo (armature metalliche, armi di ferro/acciaio)"}
+# Traduzioni italiane (testi in traduzioni/NN.json, campi tradotti da traduci_campi.py)
+import os
+from traduci_campi import portata as _p_it, durata as _d_it, resistenza as _r_it
+_TR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'traduzioni')
+for c in out['colleges']:
+    tr = json.load(open(os.path.join(_TR, f"{c['num']}.json")))
+    for v in c['entries']:
+        v['testo_it'] = tr[v['code']]
+        if v.get('range'): v['portata_it'] = _p_it(v['range'])
+        if v.get('duration'): v['durata_it'] = _d_it(v['duration'])
+        if v.get('resist_text'): v['resistenza_it'] = _r_it(v['resist_text'])
 json.dump(out, open('/home/claude/dq/json/magic.json', 'w'), ensure_ascii=False, indent=1)
 print('voci', sum(len(c['entries']) for c in out['colleges']))
 for c in out['colleges']:

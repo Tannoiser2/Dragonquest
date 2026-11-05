@@ -75,6 +75,21 @@ func bottone(testo: String, azione: Callable) -> Button:
 	return b
 
 
+## Spezza un testo lungo in righe di circa `larghezza` caratteri (per i tooltip).
+func a_capo(testo: String, larghezza: int) -> String:
+	var righe: Array[String] = []
+	var riga := ""
+	for parola in testo.split(" ", false):
+		if riga.length() + parola.length() + 1 > larghezza and riga != "":
+			righe.append(riga)
+			riga = parola
+		else:
+			riga = parola if riga == "" else riga + " " + parola
+	if riga != "":
+		righe.append(riga)
+	return "\n".join(righe)
+
+
 func pannello(contenuto: Control) -> PanelContainer:
 	var p := PanelContainer.new()
 	var st := StyleBoxFlat.new()
@@ -284,6 +299,9 @@ func _mostra_azioni() -> void:
 				combat.esegui(f, "prepara_magia", Vector2i.ZERO, cod)
 				_chiudi_azione())
 			b0.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			var voce: Dictionary = Rules.voce_magica(f.collegio, cod)
+			if not voce.is_empty():
+				b0.tooltip_text = a_capo(String(voce.get("testo_it", "")), 90)
 			box_azioni.add_child(b0)
 		box_azioni.add_child(bottone("Annulla", func(): scelta_magia = false; _aggiorna_arena()))
 		return

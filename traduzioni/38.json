@@ -1,0 +1,10 @@
+{
+"T-1": "L'Adept ha una Base Chance pari alla sua Percezione (+5 per Rank) di vedere oggetti normalmente invisibili o resi invisibili con la magia (ad esempio con Cammino invisibile, Mimetismo e Invisibilità). Ha anche la visione notturna di un Elfo. Il Moltiplicatore XP del talento è 200.",
+"T-2": "Restando immobile e concentrato per tutta la durata del talento, l'Adept proietta un'immagine di sé entro 15 piedi (+15 piedi per Rank) dalla sua vera posizione. Finché si concentra, l'illusione resta e lui è invisibile; quando smette, torna visibile e l'immagine svanisce. L'immagine si forma e l'Adept diventa invisibile in circa 10 secondi meno 1 secondo per Rank. Il Moltiplicatore XP del talento è 150.",
+"G-1": "A differenza degli altri incantesimi del Collegio, non è un'illusione: l'Adept spende 2 punti di Fatica in più del normale per creare un lampo di luce accecante. Tutte le entità rivolte verso l'Adept quando l'incantesimo viene lanciato devono resistere o restano accecate per 20 secondi. Chi è accecato ha -50 alla Base Chance di colpire e si muove a metà del TMR. L'Adept non ne è colpito, perché il lampo parte dal suo corpo.",
+"G-2": "Crea un'illusione visiva, mobile quanto l'oggetto o l'entità che rappresenta e con tutte le sue caratteristiche apparenti. Se tocca o viene toccata da un'altra entità o oggetto, svanisce all'istante.",
+"G-3": "Crea l'illusione di uno o più suoni a scelta dell'Adept.",
+"G-4": "Crea un odore (e/o un sapore) a scelta dell'Adept.",
+"G-5": "Crea un'illusione tattile a scelta dell'Adept. Può anche far provare a 1 bersaglio (+1 ogni 3 Rank o frazione) sensazioni fisiche come fame, dolore o benessere. Se il bersaglio non può attribuirle a una causa esterna diversa dall'Adept, l'illusione non può fargli del male. I danni inflitti da un'illusione restano anche dopo che la vittima smette di crederci: sono danni reali.",
+"Q-1": "Con un'ora di rituale l'Adept crea l'illusione di nebbia o foschia in un'area entro 30 piedi (+30 piedi per Rank) da sé. La nebbia dura finché l'Adept si concentra per mantenerla e non viene dissolta dalla magia. La Base Chance è 50% (+5 per Rank) e il Moltiplicatore XP è 50."
+}

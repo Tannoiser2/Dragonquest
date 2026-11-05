@@ -35,6 +35,21 @@ func _ready() -> void:
 	verifica(Rules.fatigue_da_endurance(15) == 20, "Fatigue da Endurance 15 = 20")
 	verifica(int(Rules.danno_speciale(80)["endurance_max"]) == 12, "Special Damage: SC 80 -> danno a EN fino a 12")
 	verifica(String(Rules.ferita_grave(11)["text_it"]).contains("Aorta"), "Ferita grave 11 = aorta")
+	# Traduzione: ogni voce magica ha il testo italiano e i campi tradotti
+	var senza_it := 0
+	var residui := 0
+	var totale_voci := 0
+	for num in Rules.collegi.keys():
+		for v in Rules.collegio(int(num)).get("entries", []):
+			totale_voci += 1
+			if String(v.get("testo_it", "")).length() < 20:
+				senza_it += 1
+			for k in ["portata_it", "durata_it", "resistenza_it"]:
+				var t := String(v.get(k, ""))
+				if t.contains("additional") or t.contains("feet") or t.contains("resisted") or t.contains("unranked"):
+					residui += 1
+	verifica(totale_voci == 351 and senza_it == 0, "Testi italiani per tutte le %d voci magiche (mancanti %d)" % [totale_voci, senza_it])
+	verifica(residui == 0, "Portata, durata e resistenza tradotte (residui inglesi %d)" % residui)
 	var hg := HexGrid.new()
 	verifica(HexGrid.distanza(Vector2i(0, 0), Vector2i(3, -1)) == 3, "Distanza esagonale")
 	verifica(hg.di_fronte(Vector2i(0, 0), 0, Vector2i(1, 0)) and not hg.di_fronte(Vector2i(0, 0), 0, Vector2i(-1, 0)), "Fronte e retro")

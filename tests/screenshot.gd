@@ -21,6 +21,7 @@ func _ready() -> void:
 	cr.opt_collegio.select(idx)
 	cr._cambia_collegio(idx)
 	cr.schede.current_tab = 2
+	cr._mostra_voce(Rules.voce_magica(42, "S-4"))
 	await _attendi(10)
 	_scatta("1b_magia")
 	cr.schede.current_tab = 3
