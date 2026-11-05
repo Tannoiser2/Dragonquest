@@ -122,6 +122,9 @@ func riga(etich: String, ctrl: Control) -> HBoxContainer:
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	h.add_child(l)
 	ctrl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if ctrl is OptionButton:
+		(ctrl as OptionButton).clip_text = true
+		ctrl.custom_minimum_size.x = 120
 	h.add_child(ctrl)
 	return h
 
@@ -163,6 +166,7 @@ func mostra_creazione() -> void:
 	colonne.add_child(_colonna_equipaggiamento())
 	var col_log := VBoxContainer.new()
 	col_log.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col_log.custom_minimum_size.x = 260
 	col_log.add_child(titolo("Registro dei tiri", 18))
 	log_creazione = RichTextLabel.new()
 	log_creazione.bbcode_enabled = true
@@ -194,7 +198,7 @@ func _colonna_caratteristiche() -> Control:
 		s.value_changed.connect(func(val): _cambia_caratt(k, val))
 		spin_caratt[k] = s
 		v.add_child(riga(CharacterBuilder.NOMI_CARATT[k] + " (" + k + ")", s))
-	v.add_child(bottone("Distribuisci da guerriero", func(): _distribuisci(["PS", "MD", "AG", "EN", "WP", "MA"])))
+	v.add_child(bottone("Distribuisci da guerriero", func(): _distribuisci(["PS", "MD", "EN", "AG", "WP", "MA"])))
 	v.add_child(bottone("Distribuisci da schermidore", func(): _distribuisci(["MD", "AG", "EN", "PS", "WP", "MA"])))
 	lbl_errori = etichetta()
 	lbl_errori.add_theme_color_override("font_color", Color(0.95, 0.55, 0.45))
@@ -213,6 +217,8 @@ func _colonna_origini() -> Control:
 	v.add_child(riga("Sesso", opt_sesso))
 	var hm := HBoxContainer.new()
 	lbl_mano = etichetta("Mano: da tirare")
+	lbl_mano.autowrap_mode = TextServer.AUTOWRAP_OFF
+	lbl_mano.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hm.add_child(lbl_mano)
 	hm.add_child(bottone("Tira", _tira_mano))
 	v.add_child(hm)
@@ -240,7 +246,7 @@ func _colonna_origini() -> Control:
 
 func _colonna_equipaggiamento() -> Control:
 	var v := VBoxContainer.new()
-	v.custom_minimum_size.x = 380
+	v.custom_minimum_size.x = 420
 	v.add_child(titolo("4. Equipaggiamento e addestramento", 18))
 	edit_nome = LineEdit.new()
 	edit_nome.text = "Rolf"
@@ -360,7 +366,7 @@ func _personaggio_casuale() -> void:
 		builder.accetta_umano()
 	builder.tira_retaggio()
 	retaggio_tirato = true
-	builder.distribuzione_automatica(["PS", "MD", "AG", "EN", "WP", "MA"])
+	builder.distribuzione_automatica(["PS", "MD", "EN", "AG", "WP", "MA"])
 	for k in CharacterBuilder.PRIMARIE:
 		spin_caratt[k].max_value = builder.massimo
 		spin_caratt[k].set_value_no_signal(builder.valori[k])
