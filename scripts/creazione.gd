@@ -5,6 +5,22 @@ extends MarginContainer
 
 signal pronto(f: Fighter)
 
+const REQUISITI_IT := {
+	36: "Nessuna restrizione.",
+	37: "Nessuna restrizione. +1 per ogni punto di Volontà sopra quella del bersaglio, -2 per ogni punto sotto.",
+	38: "Nessuna restrizione. -5 per ogni senso oltre il primo; +2 per ogni punto di Volontà sopra 15 (-2 sotto).",
+	39: "Conoscenza generale: tutti i controincantesimi. Bonus se conosce il Vero Nome del bersaglio. Nessun requisito di Attitudine magica.",
+	40: "Deve essere a contatto con l'aria. +20 in cima a un monte, -15 sottoterra o al chiuso.",
+	41: "Deve essere vicino all'acqua. +30 a contatto con una massa d'acqua, -10 sulla terraferma lontano dall'acqua.",
+	42: "Solo dove il fuoco può esistere. -15/-20 con nebbia o pioggia, +15 vicino a un fuoco.",
+	43: "Deve toccare la terra. +5 con il vischio, +50 in un luogo di potere, -5 in edifici senza pavimento di terra.",
+	44: "Tre scuole (Mago delle stelle, Mago oscuro, Tessitore d'ombre) con bonus e malus secondo luce e buio.",
+	45: "Nessuna restrizione. Bonus nelle feste negromantiche, malus nelle feste dei Poteri della Luce.",
+	46: "Non si evoca un'entità già vincolata né fuori dal suo ambiente. Bonus o malus secondo la rarità della creatura.",
+	47: "Quasi tutti i rituali richiedono un laboratorio, materiali e tempo; serve una bottega da forgiatore.",
+	48: "Servono i bastoncini runici o la bacchetta runica personale, con bonus secondo il materiale.",
+}
+
 var m: Node                        # la scena principale, per stili e font
 var builder: CharacterBuilder
 var retaggio_tirato := false
@@ -334,6 +350,7 @@ func _riga_incantesimo(v: Dictionary, generale: bool) -> Control:
 	var testo := "%s  %s%s" % [codice, v.get("nome", v["name"]), ("  [combattimento]" if combat else "")]
 	var l: Label = m.etichetta(testo)
 	l.custom_minimum_size.x = 380
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.tooltip_text = "%s\nBase Chance %s  Moltiplicatore XP %s\n%s" % [v["name"], str(bc) if bc != null else "-", str(v.get("experience_multiple", "-")), String(v.get("effects", v.get("text", ""))).substr(0, 600)]
 	l.mouse_filter = Control.MOUSE_FILTER_PASS
 	if combat:
@@ -349,6 +366,8 @@ func _riga_incantesimo(v: Dictionary, generale: bool) -> Control:
 			aggiorna())
 		riga.add_child(s)
 	var info: Label = m.etichetta("BC %s" % (str(bc) if bc != null else "-"))
+	info.autowrap_mode = TextServer.AUTOWRAP_OFF
+	info.custom_minimum_size.x = 70
 	info.add_theme_color_override("font_color", Color(0.75, 0.72, 0.65))
 	riga.add_child(info)
 	return riga
@@ -518,7 +537,7 @@ func aggiorna() -> void:
 	testo += "Fatica %d  Percezione %d  TMR %d\n" % [f.ft, f.pc, f.tmr()]
 	testo += "Strike Chance %d  Difesa %d  Iniziativa %d\n" % [f.strike_chance("mischia"), f.difesa(false, "melee"), f.valore_iniziativa()]
 	if f.collegio > 0:
-		testo += "Collegio: %s, Magic Resistance %d\n" % [Rules.collegio(f.collegio)["nome"], f.wp]
+		testo += "Collegio: %s, resistenza alla magia %d\n" % [Rules.collegio(f.collegio)["nome"], f.wp]
 		if f.ferro_freddo():
 			testo += "[color=#e08070]Ferro freddo: con questo equipaggiamento non può lanciare.[/color]\n"
 	var nomi_ab: Array = []
@@ -529,7 +548,7 @@ func aggiorna() -> void:
 	lbl_finali.text = testo
 	lbl_spesa.text = "XP: armi %d + magia %d + abilità %d = %d su %d (razza x%.1f)\nDenaro: %d su %d monete d'argento%s" % [conti["xp_armi"], conti["xp_magia"], conti["xp_abilita"], xp_tot, builder.xp, builder.moltiplicatore_xp(), conti["denaro"], builder.denaro, (" (incantesimi %d)" % conti["denaro_magia"]) if conti["denaro_magia"] > 0 else ""]
 	if builder.collegio > 0:
-		lbl_collegio.text = "Richiede Attitudine magica %d. Incantesimi e rituali di Rank 5 o meno: %d su %d. Passa il mouse su un incantesimo per i dettagli; in oro quelli usabili in combattimento.\n%s" % [Rules.ma_richiesta(builder.collegio), builder.conoscenze_basse(), builder.valore_finale("MA"), String(Rules.collegio(builder.collegio).get("requirements", "")).substr(0, 300)]
+		lbl_collegio.text = "Richiede Attitudine magica %d. Incantesimi e rituali di Rank 5 o meno: %d su %d. Passa il mouse su un incantesimo per i dettagli; in oro quelli usabili in combattimento.\n%s" % [Rules.ma_richiesta(builder.collegio), builder.conoscenze_basse(), builder.valore_finale("MA"), REQUISITI_IT.get(builder.collegio, "")]
 	else:
 		lbl_collegio.text = "Un personaggio senza Collegio ha +20 alla resistenza contro la magia."
 	opt_scuola.disabled = builder.collegio != 44
