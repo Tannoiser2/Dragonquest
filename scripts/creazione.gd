@@ -10,6 +10,7 @@ var builder: CharacterBuilder
 var retaggio_tirato := false
 var mano_tirata := false
 
+var schede: TabContainer
 var spin_caratt: Dictionary = {}
 var lbl_punti: Label
 var lbl_errori: Label
@@ -53,7 +54,7 @@ func _init(principale: Node, d: Dice) -> void:
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for lato in ["left", "right", "top", "bottom"]:
 		add_theme_constant_override("margin_" + lato, 20)
 	var v := VBoxContainer.new()
@@ -65,7 +66,7 @@ func _ready() -> void:
 	corpo.add_theme_constant_override("separation", 14)
 	corpo.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(corpo)
-	var schede := TabContainer.new()
+	schede = TabContainer.new()
 	schede.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	schede.size_flags_stretch_ratio = 2.6
 	schede.add_theme_font_override("font", m.font_grassetto)

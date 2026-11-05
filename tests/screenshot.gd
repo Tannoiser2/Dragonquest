@@ -16,6 +16,18 @@ func _ready() -> void:
 	main._personaggio_casuale()
 	await _attendi(10)
 	_scatta("1_creazione")
+	var cr: Creazione = main.radice_creazione
+	var idx := cr.num_collegi.find(42)
+	cr.opt_collegio.select(idx)
+	cr._cambia_collegio(idx)
+	cr.schede.current_tab = 2
+	await _attendi(10)
+	_scatta("1b_magia")
+	cr.schede.current_tab = 3
+	await _attendi(10)
+	_scatta("1c_abilita")
+	cr.opt_collegio.select(0)
+	cr._cambia_collegio(0)
 	main._alle_armi()
 	await _attendi(20)
 	_scatta("2_arena_inizio")
