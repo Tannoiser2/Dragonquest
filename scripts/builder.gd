@@ -90,27 +90,30 @@ func errori_assegnazione() -> Array:
 
 
 func distribuzione_automatica(priorita: Array) -> void:
-	## Distribuisce i punti seguendo un ordine di priorita, rispettando la regola 5.2.
+	## Distribuisce i punti in modo bilanciato secondo un ordine di priorita, rispettando la regola 5.2.
+	## Ogni punto va alla caratteristica piu "indietro" rispetto al suo peso.
+	const PESI := [1.0, 0.95, 0.85, 0.8, 0.45, 0.1]
 	for k in PRIMARIE:
 		valori[k] = 5
-	var resto := punti - 30
 	var tetti := [massimo, massimo - 1, massimo - 1, massimo - 2, massimo - 2, massimo - 2]
 	if massimo <= 20:
 		tetti = [massimo, massimo, massimo - 1, massimo - 1, massimo - 2, massimo - 2]
-	for i in priorita.size():
-		var k: String = priorita[i]
-		var aggiunta: int = min(resto, tetti[i] - 5)
-		valori[k] = 5 + aggiunta
-		resto -= aggiunta
-	# eventuale avanzo (raro): spalmato all'indietro senza superare i tetti
-	var giro := 0
-	while resto > 0 and giro < 100:
-		for i in range(priorita.size() - 1, -1, -1):
-			var k: String = priorita[i]
-			if resto > 0 and int(valori[k]) < tetti[i]:
-				valori[k] = int(valori[k]) + 1
-				resto -= 1
-		giro += 1
+	var resto := punti - 30
+	while resto > 0:
+		var scelto := -1
+		var rapporto_min := INF
+		for i in priorita.size():
+			var v := int(valori[priorita[i]])
+			if v >= int(tetti[i]):
+				continue
+			var r: float = (v - 5) / float(PESI[i])
+			if r < rapporto_min:
+				rapporto_min = r
+				scelto = i
+		if scelto < 0:
+			break
+		valori[priorita[scelto]] = int(valori[priorita[scelto]]) + 1
+		resto -= 1
 
 
 # ------------------------------------------------------------ 6.1 - 6.3

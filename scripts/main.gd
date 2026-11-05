@@ -124,6 +124,7 @@ func riga(etich: String, ctrl: Control) -> HBoxContainer:
 	ctrl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if ctrl is OptionButton:
 		(ctrl as OptionButton).clip_text = true
+		(ctrl as OptionButton).fit_to_longest_item = false
 		ctrl.custom_minimum_size.x = 120
 	h.add_child(ctrl)
 	return h

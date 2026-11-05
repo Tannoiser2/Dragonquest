@@ -39,6 +39,19 @@ func _ready() -> void:
 	verifica(HexGrid.distanza(Vector2i(0, 0), Vector2i(3, -1)) == 3, "Distanza esagonale")
 	verifica(hg.di_fronte(Vector2i(0, 0), 0, Vector2i(1, 0)) and not hg.di_fronte(Vector2i(0, 0), 0, Vector2i(-1, 0)), "Fronte e retro")
 
+	# Distribuzione automatica valida (regola 5.2) per ogni tiro 2D10
+	var tutte_valide := true
+	for t in range(2, 21):
+		var b := CharacterBuilder.new(Dice.new(7))
+		var riga := Rules.generazione_punti(t)
+		b.punti = int(riga["points"])
+		b.massimo = int(riga["max"])
+		b.distribuzione_automatica(["PS", "MD", "EN", "AG", "WP", "MA"])
+		if b.errori_assegnazione().size() > 0:
+			tutte_valide = false
+			printerr("  tiro ", t, ": ", b.errori_assegnazione())
+	verifica(tutte_valide, "Distribuzione automatica valida per tutti i tiri 2D10")
+
 	# Partite automatiche
 	var vittorie := [0, 0]
 	for partita in 30:
