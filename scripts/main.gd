@@ -18,6 +18,9 @@ var radice_arena: Control
 var combat: Combat
 var vista: ArenaView
 var lbl_scheda: RichTextLabel
+var lbl_dettaglio: RichTextLabel
+var pannello_dettaglio: PanelContainer
+var figura_scheda: Fighter
 var box_azioni: VBoxContainer
 var log_arena: RichTextLabel
 var lbl_sotto: Label
@@ -208,6 +211,20 @@ func mostra_arena() -> void:
 	lbl_scheda.bbcode_enabled = true
 	lbl_scheda.fit_content = true
 	lato.add_child(lbl_scheda)
+	lbl_scheda.meta_hover_started.connect(_mostra_dettaglio)
+	lbl_scheda.meta_clicked.connect(_mostra_dettaglio)
+	var vd := VBoxContainer.new()
+	lbl_dettaglio = RichTextLabel.new()
+	lbl_dettaglio.bbcode_enabled = true
+	lbl_dettaglio.scroll_active = true
+	lbl_dettaglio.custom_minimum_size.y = 150
+	vd.add_child(lbl_dettaglio)
+	var chiudi := bottone("Chiudi descrizione", func(): pannello_dettaglio.visible = false)
+	chiudi.size_flags_horizontal = Control.SIZE_SHRINK_END
+	vd.add_child(chiudi)
+	pannello_dettaglio = pannello(vd)
+	pannello_dettaglio.visible = false
+	lato.add_child(pannello_dettaglio)
 	box_azioni = VBoxContainer.new()
 	lato.add_child(box_azioni)
 	lbl_sotto = etichetta()
@@ -260,7 +277,32 @@ func _passo_ia() -> void:
 		combat.passo()
 
 
+## Descrizione italiana completa di un incantesimo della figura in scheda.
+func _mostra_dettaglio(meta: Variant) -> void:
+	if figura_scheda == null or figura_scheda.collegio <= 0:
+		return
+	var v: Dictionary = Rules.voce_magica(figura_scheda.collegio, String(meta))
+	if v.is_empty():
+		return
+	var cod := String(meta)
+	var t := "[b][color=#d8b25a]%s  %s[/color][/b]  Rank %d\n" % [cod, v.get("nome", v["name"]), figura_scheda.rank_incantesimo(cod)]
+	var dati: Array[String] = ["CC %d" % figura_scheda.cast_chance(cod), "Fatica %d" % figura_scheda.costo_fatica(cod)]
+	if v.get("portata_it"):
+		dati.append("Portata: " + String(v["portata_it"]))
+	if v.get("durata_it"):
+		dati.append("Durata: " + String(v["durata_it"]))
+	if v.get("resistenza_it"):
+		dati.append("Resistenza: " + String(v["resistenza_it"]))
+	t += "[color=#bdb6a8]" + "   ".join(dati) + "[/color]\n" + String(v.get("testo_it", ""))
+	lbl_dettaglio.text = t
+	lbl_dettaglio.scroll_to_line(0)
+	pannello_dettaglio.visible = true
+
+
 func _mostra_scheda(f: Fighter) -> void:
+	if f != figura_scheda and pannello_dettaglio != null:
+		pannello_dettaglio.visible = false
+	figura_scheda = f
 	if f == null:
 		lbl_scheda.text = ""
 		return
@@ -273,10 +315,10 @@ func _mostra_scheda(f: Fighter) -> void:
 	if f.collegio > 0:
 		var nomi: Array = []
 		for codice in f.incantesimi_da_combattimento():
-			nomi.append("%s R%d" % [Magia.nome(f, codice).replace("Incantesimo ", ""), f.rank_incantesimo(codice)])
+			nomi.append("[url=%s][color=#e8d3a0]%s[/color][/url] R%d" % [codice, Magia.nome(f, codice).replace("Incantesimo ", ""), f.rank_incantesimo(codice)])
 		testo += "[color=#d8b25a]%s[/color] (MA %d, resistenza %d)%s\n" % [Rules.collegio(f.collegio)["nome"], f.ma_attuale(), f.wp_attuale(), "" if not f.ferro_freddo() else ", ferro freddo"]
 		if nomi.size() > 0:
-			testo += "Incantesimi: " + ", ".join(nomi) + "\n"
+			testo += "Incantesimi: " + ", ".join(nomi) + "  [color=#a89f8a](passa sopra un nome per la descrizione)[/color]\n"
 	if f.abilita.size() > 0:
 		var ab: Array = []
 		for id in f.abilita:

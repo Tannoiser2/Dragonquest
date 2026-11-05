@@ -45,6 +45,14 @@ func _ready() -> void:
 		await _attendi(2)
 	await _attendi(10)
 	_scatta("3_arena_mischia")
+	# scheda di un adept con la descrizione di un incantesimo aperta
+	for g in main.combat.figure:
+		if g.collegio > 0 and g.incantesimi_da_combattimento().size() > 0:
+			main._mostra_scheda(g)
+			main._mostra_dettaglio(g.incantesimi_da_combattimento()[0])
+			break
+	await _attendi(10)
+	_scatta("4_arena_magia")
 	get_tree().quit()
 
 
