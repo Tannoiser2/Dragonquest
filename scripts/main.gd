@@ -299,6 +299,13 @@ func _mostra_dettaglio(meta: Variant) -> void:
 	pannello_dettaglio.visible = true
 
 
+## "Incantesimo del Sonno incantato" -> "Sonno incantato"
+func _nome_breve(nome: String) -> String:
+	var re := RegEx.new()
+	re.compile("^(Incantesimo|Rituale) (di |del |della |dello |dei |degli |delle |dell')?")
+	return re.sub(nome, "")
+
+
 func _mostra_scheda(f: Fighter) -> void:
 	if f != figura_scheda and pannello_dettaglio != null:
 		pannello_dettaglio.visible = false
@@ -315,7 +322,7 @@ func _mostra_scheda(f: Fighter) -> void:
 	if f.collegio > 0:
 		var nomi: Array = []
 		for codice in f.incantesimi_da_combattimento():
-			nomi.append("[url=%s][color=#e8d3a0]%s[/color][/url] R%d" % [codice, Magia.nome(f, codice).replace("Incantesimo ", ""), f.rank_incantesimo(codice)])
+			nomi.append("[url=%s][color=#e8d3a0]%s[/color][/url] R%d" % [codice, _nome_breve(Magia.nome(f, codice)), f.rank_incantesimo(codice)])
 		testo += "[color=#d8b25a]%s[/color] (MA %d, resistenza %d)%s\n" % [Rules.collegio(f.collegio)["nome"], f.ma_attuale(), f.wp_attuale(), "" if not f.ferro_freddo() else ", ferro freddo"]
 		if nomi.size() > 0:
 			testo += "Incantesimi: " + ", ".join(nomi) + "  [color=#a89f8a](passa sopra un nome per la descrizione)[/color]\n"
