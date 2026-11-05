@@ -1,0 +1,114 @@
+{
+  "_source": "Armor Chart 18.1, Shield Chart 17.5",
+  "armor": [
+    {
+      "name": "Cloth / Heavy Furs",
+      "weight_mult": 1,
+      "protection": 1,
+      "ag_loss": 0,
+      "cost_sp": 10,
+      "stealth": 5
+    },
+    {
+      "name": "Leather",
+      "weight_mult": 3,
+      "protection": 4,
+      "ag_loss": -1,
+      "cost_sp": 20,
+      "stealth": 0
+    },
+    {
+      "name": "Scale",
+      "weight_mult": 4,
+      "protection": 5,
+      "ag_loss": -3,
+      "cost_sp": 100,
+      "stealth": -5
+    },
+    {
+      "name": "Chainmail",
+      "weight_mult": 7,
+      "protection": 6,
+      "ag_loss": -2,
+      "cost_sp": 200,
+      "stealth": -10
+    },
+    {
+      "name": "Partial Plate",
+      "weight_mult": 6,
+      "protection": 6,
+      "ag_loss": -2,
+      "cost_sp": 250,
+      "stealth": -15
+    },
+    {
+      "name": "Full Plate",
+      "weight_mult": 8,
+      "protection": 7,
+      "ag_loss": -3,
+      "cost_sp": 300,
+      "stealth": -20,
+      "rare": true
+    },
+    {
+      "name": "Improved Plate",
+      "weight_mult": 7,
+      "protection": 8,
+      "ag_loss": -3,
+      "cost_sp": 400,
+      "stealth": -20,
+      "rare": true
+    }
+  ],
+  "armor_weight_rule": "peso (lb) = weight_mult x size_number della razza (donne: size_number - 0.5)",
+  "grievous_armor_damage": "Ferita grave: Protection -2 finche' riparata (oppure si spacca lo scudo)",
+  "shields": [
+    {
+      "name": "Buckler",
+      "weight_lb": 3,
+      "def_per_rank": 2,
+      "md_loss": 0,
+      "cost_sp": 5
+    },
+    {
+      "name": "Small Round Shield",
+      "weight_lb": 5,
+      "def_per_rank": 3,
+      "md_loss": -2,
+      "cost_sp": 8
+    },
+    {
+      "name": "Large Round Shield",
+      "weight_lb": 10,
+      "def_per_rank": 4,
+      "md_loss": -3,
+      "cost_sp": 10
+    },
+    {
+      "name": "Kite Shield",
+      "weight_lb": 15,
+      "def_per_rank": 5,
+      "md_loss": -4,
+      "cost_sp": 15
+    },
+    {
+      "name": "Tower Shield",
+      "weight_lb": 25,
+      "def_per_rank": 6,
+      "md_loss": -6,
+      "cost_sp": 20,
+      "no_shield_rush": true
+    },
+    {
+      "name": "Main-Gauche",
+      "weight_lb": 1,
+      "def_per_rank": 2,
+      "md_loss": 0,
+      "cost_sp": 20,
+      "no_shield_rush": true,
+      "no_def_vs_fire": true,
+      "kept_in_close": true
+    }
+  ],
+  "shield_rules": "Difesa = AG modificata + Rank scudo x def_per_rank. Lo scudo non conta da dietro, in Close combat, se stordito. Entrando in Close si lascia cadere (tranne Main-Gauche)."
+}

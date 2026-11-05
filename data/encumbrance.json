@@ -1,0 +1,220 @@
+{
+  "_source": "Fatigue and Encumbrance Chart 86.9 (p. 143)",
+  "how": "Riga per PS; la colonna e' il carico (lb) arrotondato all'entrata piu' vicina (a meta' strada: la maggiore). Riga agility_loss = penalita' di AG in combattimento.",
+  "agility_loss": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    7,
+    9,
+    10,
+    12
+  ],
+  "fatigue_loss_per_hour": {
+    "Light": [
+      0,
+      0,
+      0,
+      0.5,
+      0.5,
+      1,
+      2,
+      3,
+      5
+    ],
+    "Medium": [
+      0,
+      0,
+      0.5,
+      0.5,
+      1,
+      1,
+      3,
+      4,
+      6
+    ],
+    "Hard": [
+      0.5,
+      0.5,
+      1,
+      1,
+      2,
+      3,
+      5,
+      6,
+      8
+    ],
+    "Strenuous": [
+      2,
+      2,
+      3,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9
+    ]
+  },
+  "rows": [
+    {
+      "ps_min": 3,
+      "ps_max": 5,
+      "loads": [
+        0,
+        0,
+        0,
+        10,
+        18,
+        25,
+        35,
+        40
+      ],
+      "max": 50
+    },
+    {
+      "ps_min": 6,
+      "ps_max": 8,
+      "loads": [
+        0,
+        0,
+        10,
+        15,
+        20,
+        30,
+        50,
+        60
+      ],
+      "max": 75
+    },
+    {
+      "ps_min": 9,
+      "ps_max": 12,
+      "loads": [
+        0,
+        10,
+        15,
+        20,
+        30,
+        50,
+        70,
+        80
+      ],
+      "max": 100
+    },
+    {
+      "ps_min": 13,
+      "ps_max": 17,
+      "loads": [
+        10,
+        15,
+        20,
+        30,
+        50,
+        70,
+        90,
+        100
+      ],
+      "max": 125
+    },
+    {
+      "ps_min": 18,
+      "ps_max": 20,
+      "loads": [
+        15,
+        20,
+        30,
+        40,
+        60,
+        90,
+        120,
+        130
+      ],
+      "max": 150
+    },
+    {
+      "ps_min": 21,
+      "ps_max": 23,
+      "loads": [
+        20,
+        30,
+        50,
+        60,
+        80,
+        120,
+        160,
+        170
+      ],
+      "max": 200
+    },
+    {
+      "ps_min": 24,
+      "ps_max": 27,
+      "loads": [
+        30,
+        40,
+        60,
+        70,
+        100,
+        140,
+        180,
+        190
+      ],
+      "max": 225
+    },
+    {
+      "ps_min": 28,
+      "ps_max": 32,
+      "loads": [
+        40,
+        50,
+        80,
+        90,
+        120,
+        160,
+        200,
+        210
+      ],
+      "max": 250
+    },
+    {
+      "ps_min": 33,
+      "ps_max": 36,
+      "loads": [
+        50,
+        60,
+        100,
+        120,
+        160,
+        200,
+        240,
+        250
+      ],
+      "max": 275
+    },
+    {
+      "ps_min": 37,
+      "ps_max": 40,
+      "loads": [
+        60,
+        70,
+        120,
+        150,
+        190,
+        225,
+        270,
+        290
+      ],
+      "max": 325
+    }
+  ],
+  "_note": "Le 8 colonne di carico + la colonna Max corrispondono ai 9 valori di agility_loss/fatigue_loss.",
+  "fatigue_recovery_86_7": {
+    "Relaxation": 1,
+    "Nap": 2,
+    "Sleep": 3,
+    "Eat Hot Meal": 2
+  }
+}
