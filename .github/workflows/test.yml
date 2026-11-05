@@ -25,3 +25,9 @@ jobs:
         run: |
           pip install -q fonttools
           python3 tools/controlla_glifi.py
+      - name: Screenshot dell'interfaccia (stampati in base64 nel registro)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          mkdir -p shot
+          xvfb-run -a -s "-screen 0 1600x900x24" ./godot --path . --rendering-driver opengl3 --resolution 1600x900 res://tests/Screenshot.tscn -- "$PWD/shot" 2>&1 | tail -20 || true
+          for f in shot/*.png; do echo "===INIZIO $(basename $f)==="; base64 -w 0 "$f"; echo; echo "===FINE==="; done
