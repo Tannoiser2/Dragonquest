@@ -28,6 +28,16 @@ var scudo := ""               # nome nella Shield Chart, "" = nessuno
 var rank_scudo := -1
 var armatura := "Leather"
 
+# --- magia e abilità (Libri Secondo e Terzo)
+var collegio := 0             # numero del Collegio (36-48), 0 = nessuno
+var scuola_celeste := ""      # Star Mage, Dark Mage, Shadow Weaver (solo Magie Celesti)
+var incantesimi: Array = []   # [{"code": "S-2", "rank": 3}]
+var abilita: Dictionary = {}  # id abilità -> Rank
+var rank_furtivita := 0
+var rank_equitazione := 0
+var aspetto := ""
+var bellezza := 0
+
 # --- stato in combattimento
 var hex := Vector2i.ZERO
 var facing := 0
@@ -56,8 +66,26 @@ var mod_tmr := 0
 var mod_pc := 0
 var protezione_persa := 0
 var ha_agito := false
+var azioni := 0               # azioni rimaste nel Pulse (2 se accelerato)
 var ferite: Array = []        # testi delle ferite gravi (per la scheda)
 var infezione := 0            # probabilita di infezione accumulata [24]
+var emorragia_rank_guaritore := 0
+# magia in combattimento
+var preparato := ""           # codice dell'incantesimo preparato
+var effetti: Array = []       # effetti magici attivi: {"tipo", "fine", ...}
+var addormentato := false     # sonno o svenimento magico
+var sveglia_impossibile := false
+var isterico := false
+var intralciato := 0          # Pass ancora necessari per liberarsi
+var in_fuga := 0              # Pulse di fuga rimasti
+var fuga_da: Fighter = null
+var furia_contro: Fighter = null
+var muto := false
+var amnesia := false
+var mod_ma := 0
+var mod_wp := 0
+var mod_cast := 0
+var salta_pulse := false      # lentezza: agisce un Pulse sì e uno no
 
 
 func prepara_combattimento() -> void:
@@ -139,11 +167,17 @@ func pc_attuale() -> int:
 func tmr() -> int:
 	var t := Rules.tmr_da_agilita(ag_modificata())
 	t += int(Rules.razza(razza)["mods"].get("TMR", 0)) + mod_tmr
+	if not effetto("rapidita").is_empty():
+		t *= 2
+	if not effetto("lentezza").is_empty() or not effetto("accecamento").is_empty():
+		t = int(t / 2)
 	return max(1, t)
 
 
 func protezione() -> int:
-	return max(0, int(dati_armatura().get("protection", 0)) - protezione_persa)
+	var p := int(dati_armatura().get("protection", 0)) - protezione_persa
+	p += int(effetto("protezione").get("assorbe", 0))
+	return max(0, p)
 
 
 func difesa(da_dietro: bool, tipo: String) -> int:
@@ -169,9 +203,18 @@ func strike_chance(quale: String = "") -> int:
 	if mdm < md_min:
 		base -= 5 * (md_min - mdm)
 	var r := rank_arma(quale)
-	if r < 0:
-		return base
-	return base + mdm + 4 * r
+	var bonus := 0
+	var e_arma := effetto("arma")
+	if not e_arma.is_empty() and (quale == "mischia" or (quale == "" and preparata == "mischia")):
+		bonus += int(e_arma.get("sc", 0))
+	if not effetto("accecamento").is_empty():
+		bonus -= 50
+	var e_ag := effetto("agonia")
+	if not e_ag.is_empty():
+		bonus += int(e_ag.get("sc", -10))
+	if r < 0 or amnesia:
+		return base + bonus
+	return base + mdm + 4 * r + bonus
 
 
 func valore_iniziativa() -> int:
@@ -179,6 +222,8 @@ func valore_iniziativa() -> int:
 	var v := ag_modificata() + pc_attuale()
 	if not arma_caduta:
 		v += max(0, rank_arma())
+	if not effetto("rapidita").is_empty():
+		v += 10
 	return v
 
 
@@ -193,11 +238,14 @@ func modificatore_danno(quale: String = "") -> int:
 		v -= ps_min - ps
 	if a.get("hands", "1") == "1-2" and scudo == "":
 		v += 1
+	var e_arma := effetto("arma")
+	if not e_arma.is_empty() and quale != "distanza":
+		v += int(e_arma.get("danno", 0))
 	return v
 
 
 func puo_agire() -> bool:
-	return not (morto or svenuto)
+	return not (morto or svenuto or addormentato)
 
 
 func in_piedi_e_attivo() -> bool:
@@ -222,8 +270,115 @@ func descrizione_stato() -> String:
 		s.append("disarmato")
 	if emorragia_ft > 0 or emorragia_en > 0:
 		s.append("sanguina")
+	if addormentato:
+		s.append("addormentato")
+	if isterico:
+		s.append("isterico")
+	if in_fuga > 0:
+		s.append("in fuga")
+	if intralciato > 0:
+		s.append("intralciato")
+	if preparato != "":
+		s.append("incantesimo pronto")
+	for e in effetti:
+		s.append(String(e.get("nome", e["tipo"])))
 	if postura == "schiva":
 		s.append("schiva")
+	elif postura == "resiste":
+		s.append("resiste alla magia")
 	elif postura == "ritirata":
 		s.append("in ritirata")
 	return ", ".join(s) if s.size() > 0 else "pronto"
+
+
+# ------------------------------------------------------------ magia
+
+const ARMATURE_METALLICHE := ["Scale", "Chainmail", "Partial Plate", "Full Plate", "Improved Plate"]
+const ARMI_SENZA_FERRO := ["quarterstaff", "crude_club", "war_club", "giant_club", "torch", "sap", "sling", "short_bow",
+	"long_bow", "composite_bow", "giant_bow", "blowgun", "boomerang", "net", "bola", "whip", "cestus", "rock", "garotte"]
+
+
+func ramo() -> String:
+	if collegio == 0:
+		return ""
+	return String(Rules.collegio(collegio).get("branch", ""))
+
+
+func ma_attuale() -> int:
+	return max(1, ma + mod_ma)
+
+
+func wp_attuale() -> int:
+	return max(1, wp + mod_wp)
+
+
+func ferro_freddo() -> bool:
+	## 29.1: niente magia a contatto con ferro freddo (armatura metallica o arma di ferro impugnata).
+	if ARMATURE_METALLICHE.has(armatura):
+		return true
+	var id := arma_distanza if preparata == "distanza" else arma_mischia
+	if id != "" and not arma_caduta and not ARMI_SENZA_FERRO.has(id):
+		return true
+	if scudo == "Tower Shield" or scudo == "Main-Gauche":
+		return true
+	return false
+
+
+func rank_incantesimo(codice: String) -> int:
+	for i in incantesimi:
+		if i["code"] == codice:
+			return int(i["rank"])
+	return -1
+
+
+func conosce(codice: String) -> bool:
+	return rank_incantesimo(codice) >= 0
+
+
+func costo_fatica(codice: String) -> int:
+	var c := 1 if codice.begins_with("G") else 2
+	c += int(Rules.spec_combattimento(collegio, codice).get("fatica_extra", 0))
+	return c
+
+
+func cast_chance(codice: String, bersaglio: Fighter = null) -> int:
+	## Cast Chance [27.7]: Base + (MA - 15) + 3 x Rank, più i modificatori del Collegio.
+	var v := Rules.voce_magica(collegio, codice)
+	var base = v.get("base_chance", 0)
+	var cc := int(base) if base != null else 0
+	cc += ma_attuale() - 15 + 3 * max(0, rank_incantesimo(codice)) + mod_cast
+	if collegio == 37 and bersaglio != null:
+		var diff := wp_attuale() - bersaglio.wp_attuale()
+		cc += diff if diff > 0 else 2 * diff
+	if collegio == 38:
+		cc += 2 * (wp_attuale() - 15)
+	return cc
+
+
+func incantesimi_da_combattimento() -> Array:
+	var out: Array = []
+	for i in incantesimi:
+		if not Rules.spec_combattimento(collegio, i["code"]).is_empty():
+			out.append(i["code"])
+	return out
+
+
+func magic_resistance(lanciatore: Fighter) -> int:
+	## Resistenza: Volontà + modificatori di ramo [31.4, 34.1].
+	var r := wp_attuale()
+	if collegio == 0:
+		r += 20
+	else:
+		r += Rules.relazione_rami(ramo(), lanciatore.ramo())
+	return r
+
+
+func effetto(tipo: String) -> Dictionary:
+	for e in effetti:
+		if e["tipo"] == tipo:
+			return e
+	return {}
+
+
+func rank_abilita(id: String) -> int:
+	return int(abilita.get(id, -1))

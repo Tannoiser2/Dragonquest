@@ -9,6 +9,10 @@ var scudi: Dictionary = {}         # nome -> scheda
 var combattimento: Dictionary = {}
 var ingombro: Dictionary = {}
 var costi_xp: Dictionary = {}      # nome arma -> Array costi Rank 0-10
+var magia: Dictionary = {}         # magic.json completo
+var collegi: Dictionary = {}       # numero collegio -> scheda
+var magia_combat: Dictionary = {}  # magia_combattimento.json
+var abilita: Dictionary = {}       # skills.json
 
 
 func _ready() -> void:
@@ -31,6 +35,12 @@ func carica() -> void:
 	combattimento = _leggi("res://data/combat_tables.json")
 	ingombro = _leggi("res://data/encumbrance.json")
 	costi_xp = _leggi("res://data/xp_weapon_ranks.json").get("weapons", {})
+	magia = _leggi("res://data/magic.json")
+	collegi.clear()
+	for c in magia.get("colleges", []):
+		collegi[int(c["num"])] = c
+	magia_combat = _leggi("res://data/magia_combattimento.json")
+	abilita = _leggi("res://data/skills.json")
 
 
 func _leggi(percorso: String) -> Dictionary:
@@ -139,3 +149,62 @@ func ferita_grave(tiro: int) -> Dictionary:
 
 func intervallo_classe(classe: String) -> Array:
 	return combattimento["grievous_injury_18_3"]["class_ranges"].get(classe, [])
+
+
+# ------------------------------------------------------------ magia
+
+const NOMI_RAMI := {"Thaumaturgies": "Taumaturgie", "Elementals": "Elementali", "Entities": "Entità"}
+
+
+func collegio(num: int) -> Dictionary:
+	return collegi.get(num, {})
+
+
+func voce_magica(num: int, codice: String) -> Dictionary:
+	for v in collegio(num).get("entries", []):
+		if v["code"] == codice:
+			return v
+	return {}
+
+
+func spec_combattimento(num: int, codice: String) -> Dictionary:
+	return magia_combat.get("incantesimi", {}).get("%d:%s" % [num, codice], {})
+
+
+func ma_richiesta(num: int) -> int:
+	## 34.7: l'Attitudine magica deve bastare per la Conoscenza generale (incantesimi e rituali generali
+	## più i due controincantesimi). I Nomi (39) sono esenti.
+	if num == 39:
+		return 0
+	return int(collegio(num).get("general_knowledge_count", 0)) + 2
+
+
+func relazione_rami(ramo_a: String, ramo_b: String) -> int:
+	## Modificatore alla Magic Resistance [34.1]: stesso ramo +20, opposti -20, neutri 0.
+	if ramo_a == "" or ramo_b == "":
+		return 0
+	if ramo_a == ramo_b:
+		return 20
+	if (ramo_a == "Thaumaturgies" and ramo_b == "Entities") or (ramo_a == "Entities" and ramo_b == "Thaumaturgies"):
+		return -20
+	return 0
+
+
+func costo_rank_magia(em: int, rank: int, generale: bool, ma: int) -> int:
+	## 91.4: Experience Multiple x Rank da raggiungere; per la Conoscenza generale -5% per punto di MA oltre 15.
+	if em <= 0 or rank <= 0:
+		return 0
+	var c := float(em * rank)
+	if generale and ma > 15:
+		c *= max(0.0, 1.0 - 0.05 * (ma - 15))
+	return int(ceil(c))
+
+
+func abilita_scheda(id: String) -> Dictionary:
+	for a in abilita.get("skills", []):
+		if a["id"] == id:
+			return a
+	for a in abilita.get("adventure_abilities_87", []):
+		if a["id"] == id:
+			return a
+	return {}

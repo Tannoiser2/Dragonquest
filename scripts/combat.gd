@@ -114,16 +114,18 @@ func capo(lato: int) -> Fighter:
 
 func nuovo_pulse() -> void:
 	pulse += 1
+	scrivi("[color=#c9a227]--- Pulse %d ---[/color]" % pulse)
+	Magia.aggiorna_effetti(self)
 	for f in figure:
 		f.ha_agito = false
-	scrivi("[color=#c9a227]--- Pulse %d ---[/color]" % pulse)
+		f.azioni = 2 if not f.effetto("rapidita").is_empty() else 1
 	var c0 := capo(0)
 	var c1 := capo(1)
 	var t0 := 0
 	var t1 := 0
 	while t0 == t1:
-		t0 = dadi.d10() + (c0.pc_attuale() if c0 else 0)
-		t1 = dadi.d10() + (c1.pc_attuale() if c1 else 0)
+		t0 = dadi.d10() + bonus_iniziativa(c0)
+		t1 = dadi.d10() + bonus_iniziativa(c1)
 	lato_iniziativa = 0 if t0 > t1 else 1
 	scrivi("Iniziativa: tu %d, nemici %d." % [t0, t1])
 	if lato_iniziativa == 0:
@@ -133,6 +135,20 @@ func nuovo_pulse() -> void:
 		costruisci_coda(1)
 		fase = "pronto"
 	cambiato.emit()
+
+
+func bonus_iniziativa(capo_lato: Fighter) -> int:
+	## 12.2 e 62.4: Percezione del leader + Rank da Stratega se non è ingaggiato né stordito.
+	if capo_lato == null:
+		return 0
+	var b := capo_lato.pc_attuale()
+	var ms := capo_lato.rank_abilita("military_scientist")
+	if ms > 0 and not capo_lato.stordito:
+		if not e_ingaggiato(capo_lato):
+			b += ms
+		elif ms >= 8:
+			b += 1
+	return b
 
 
 func scegli_iniziativa(agisci_primo: bool) -> void:
@@ -166,6 +182,10 @@ func costruisci_coda(lato_primo: int) -> void:
 					liberi.append(f)
 		coda.append_array(liberi)
 		coda.append_array(storditi)
+	# chi è accelerato agisce due volte: la seconda azione in fondo alla coda
+	for f in figure:
+		if f.puo_agire() and not f.effetto("rapidita").is_empty():
+			coda.append(f)
 
 
 func passo() -> void:
@@ -174,15 +194,35 @@ func passo() -> void:
 		return
 	while coda.size() > 0:
 		var f: Fighter = coda.pop_front()
-		if not f.puo_agire() or f.ha_agito:
+		if not f.puo_agire() or f.azioni <= 0:
 			continue
 		attore = f
+		f.azioni -= 1
 		f.ha_agito = true
 		f.postura = ""
 		if f.stordito:
 			tenta_ripresa(f)
 			cambiato.emit()
 			return
+		if f.salta_pulse:
+			scrivi("%s è rallentato e non agisce in questo Pulse." % f.nome)
+			cambiato.emit()
+			return
+		if f.isterico:
+			scrivi("%s urla in preda all'isteria." % f.nome)
+			cambiato.emit()
+			return
+		if f.in_fuga > 0:
+			Magia.fuggi(self, f)
+			cambiato.emit()
+			return
+		if f.furia_contro != null:
+			if f.furia_contro.puo_agire():
+				IA.furia(self, f)
+				controlla_fine()
+				cambiato.emit()
+				return
+			f.furia_contro = null
 		if f.pass_obbligato > 0:
 			f.pass_obbligato -= 1
 			scrivi("%s è sbilanciato e perde l'azione." % f.nome)
@@ -255,6 +295,8 @@ func tenta_ripresa(f: Fighter) -> void:
 
 func azioni_disponibili(f: Fighter) -> Array:
 	var az: Array = []
+	if f.intralciato > 0:
+		return [{"id": "libera", "nome": "Liberati dalla ragnatela"}, {"id": "attendi", "nome": "Attendi"}]
 	if f.non_si_rialza:
 		return [{"id": "attendi", "nome": "Attendi"}]
 	if f.prono:
@@ -282,6 +324,20 @@ func azioni_disponibili(f: Fighter) -> Array:
 		az.append({"id": "cambia_arma", "nome": "Prepara %s" % ("arma da mischia" if f.preparata == "distanza" else "arma da tiro")})
 	if f.arma_caduta and not f.arma_rotta:
 		az.append({"id": "raccogli", "nome": "Raccogli l'arma"})
+	# magia [33]
+	if f.preparato != "":
+		az.append({"id": "lancia_magia", "nome": "Lancia: " + Magia.nome(f, f.preparato)})
+		az.append({"id": "annulla_magia", "nome": "Lascia svanire l'incantesimo"})
+	elif f.collegio > 0 and Magia.puo_lanciare(self, f) == "" and not Magia.incantesimi_pronti(f).is_empty():
+		az.append({"id": "prepara_magia", "nome": "Prepara un incantesimo"})
+	if nemici_di(f).any(func(g): return g.preparato != ""):
+		az.append({"id": "resisti", "nome": "Resistenza attiva alla magia"})
+	if not bersagli(f, "sveglia").is_empty():
+		az.append({"id": "sveglia", "nome": "Sveglia un compagno"})
+	if not bersagli(f, "scuoti").is_empty():
+		az.append({"id": "scuoti", "nome": "Scuoti un compagno isterico"})
+	if not bersagli(f, "ferma_emorragia").is_empty():
+		az.append({"id": "ferma_emorragia", "nome": "Ferma un'emorragia (Guaritore)"})
 	az.append({"id": "gira", "nome": "Girati"})
 	az.append({"id": "attendi", "nome": "Attendi"})
 	return az
@@ -319,6 +375,22 @@ func bersagli(f: Fighter, azione: String) -> Array:
 				if puo_tirare(f, g):
 					out4.append(g.hex)
 			return out4
+		"lancia_magia":
+			return Magia.bersagli(self, f)
+		"sveglia", "scuoti", "ferma_emorragia":
+			var out6: Array = []
+			var guaritore := f.rank_abilita("healer")
+			for g in figure:
+				if g.lato != f.lato or g.morto or HexGrid.distanza(f.hex, g.hex) > 1:
+					continue
+				if azione == "sveglia" and g.addormentato and not g.sveglia_impossibile and g != f:
+					out6.append(g.hex)
+				elif azione == "scuoti" and g.isterico and g != f:
+					out6.append(g.hex)
+				elif azione == "ferma_emorragia" and guaritore >= 0 and (g.emorragia_ft > 0 or g.emorragia_en > 0) \
+						and guaritore >= g.emorragia_rank_guaritore and f.fatica >= 1:
+					out6.append(g.hex)
+			return out6
 		"gira":
 			var out5: Array = []
 			for h in HexGrid.vicini(f.hex):
@@ -395,8 +467,43 @@ func puo_tirare(f: Fighter, g: Fighter) -> bool:
 
 # ============================================================ esecuzione
 
-func esegui(f: Fighter, azione: String, h: Vector2i = Vector2i.ZERO) -> void:
+func esegui(f: Fighter, azione: String, h: Vector2i = Vector2i.ZERO, extra: String = "") -> void:
+	# 27.5: un incantesimo pronto va lanciato subito, altrimenti svanisce
+	if f.preparato != "" and not ["lancia_magia", "annulla_magia", "prepara_magia"].has(azione):
+		scrivi("L'incantesimo preparato da %s svanisce." % f.nome)
+		f.preparato = ""
 	match azione:
+		"prepara_magia":
+			Magia.prepara(self, f, extra)
+		"lancia_magia":
+			Magia.lancia(self, f, h)
+		"annulla_magia":
+			scrivi("%s lascia svanire l'incantesimo." % f.nome)
+			f.preparato = ""
+		"resisti":
+			f.postura = "resiste"
+			scrivi("%s si concentra per resistere alla magia." % f.nome)
+		"libera":
+			f.intralciato -= 1
+			scrivi("%s %s." % [f.nome, "si libera dalla ragnatela" if f.intralciato <= 0 else "lotta contro la ragnatela"])
+		"sveglia":
+			var g4 := figura_in(h)
+			if g4:
+				g4.addormentato = false
+				g4.effetti = g4.effetti.filter(func(e): return e["tipo"] != "sonno")
+				scrivi("%s sveglia %s." % [f.nome, g4.nome])
+		"scuoti":
+			var g5 := figura_in(h)
+			if g5:
+				g5.isterico = false
+				scrivi("%s scuote %s, che torna in sé." % [f.nome, g5.nome])
+		"ferma_emorragia":
+			var g6 := figura_in(h)
+			if g6:
+				f.fatica -= 1
+				g6.emorragia_ft = 0
+				g6.emorragia_en = 0
+				scrivi("%s ferma l'emorragia di %s." % [f.nome, g6.nome])
 		"muovi":
 			sposta(f, h)
 			f.postura = "movimento"
@@ -517,6 +624,7 @@ func attacca(att: Fighter, dif: Fighter, tipo: String, ctx: Dictionary) -> bool:
 	var da_dietro := not griglia.di_fronte(dif.hex, dif.facing, att.hex)
 	var difesa := dif.difesa(da_dietro, tipo)
 	var mods := modificatori(att, dif, tipo, ctx, da_dietro)
+	Magia.concentrazione(self, dif)
 	var totale_mod := 0
 	var spiegazione: Array = []
 	for m in mods:
@@ -598,6 +706,13 @@ func modificatori(att: Fighter, dif: Fighter, tipo: String, ctx: Dictionary, da_
 			m.append([-20, "bersaglio al riparo"])
 	if ctx.get("secondaria", false):
 		m.append([-20, "mano secondaria"])
+	# effetti magici [36 S-9, 37 S-6, 43 S-4, 47 G-3] e furia [44.8]
+	for t in ["protezione", "scudo"]:
+		var e := dif.effetto(t)
+		if not e.is_empty():
+			m.append([-int(e.get("penalita", 0)), "magia protettiva"])
+	if att.furia_contro == dif or dif.furia_contro == att:
+		m.append([10, "furia"])
 	return m
 
 
@@ -718,6 +833,8 @@ func applica_ferita_grave(att: Fighter, dif: Fighter, tiro: int) -> void:
 			dif.scudo = ""
 	if e.get("attacker_disarmed", false):
 		att.arma_caduta = true
+	if e.has("bleed_stop_healer_rank"):
+		dif.emorragia_rank_guaritore = maxi(dif.emorragia_rank_guaritore, int(e["bleed_stop_healer_rank"]))
 	match String(e.get("bleed", "")):
 		"EN":
 			dif.emorragia_en += 1

@@ -52,8 +52,26 @@ func _ready() -> void:
 			printerr("  tiro ", t, ": ", b.errori_assegnazione())
 	verifica(tutte_valide, "Distribuzione automatica valida per tutti i tiri 2D10")
 
+	# Magia e abilità
+	verifica(Rules.costo_rank_magia(200, 3, false, 15) == 600, "Costo XP magia: EM 200 x Rank 3 = 600")
+	verifica(Rules.costo_rank_magia(200, 3, true, 19) == 480, "Conoscenza generale con MA 19: -20%")
+	verifica(Rules.collegi.size() == 13, "13 Collegi caricati")
+	verifica(String(Rules.voce_magica(42, "S-2").get("nome", "")).contains("Dardo di fuoco"), "Fuoco S-2 = Dardo di fuoco")
+	verifica(int(Rules.voce_magica(42, "S-6").get("base_chance", 0)) == 20, "Palla di fuoco implosiva: Base Chance 20 (correzione OCR)")
+	var mago := CharacterBuilder.adept(Dice.new(3), "Test", 0, "Human", 42, {"S-2": 3}, "quarterstaff", 0, "Leather")
+	verifica(mago.cast_chance("S-2") == 40 + mago.ma - 15 + 9, "Cast Chance = Base + (MA-15) + 3 x Rank")
+	verifica(not mago.ferro_freddo(), "Bastone e cuoio: niente ferro freddo")
+	mago.armatura = "Chainmail"
+	verifica(mago.ferro_freddo(), "Cotta di maglia: ferro freddo")
+	var bb := CharacterBuilder.new(Dice.new(5))
+	bb.rank_abilita["healer"] = 0
+	verifica(bb.costo_xp_abilita() == 100, "Guaritore a Rank 0 con l'opzione 8.6 = 100 XP (%d)" % bb.costo_xp_abilita())
+	bb.rank_abilita["healer"] = 1
+	verifica(bb.costo_xp_abilita() == 500, "Guaritore a Rank 1 = 100 + 400 XP (%d)" % bb.costo_xp_abilita())
+
 	# Partite automatiche
 	var vittorie := [0, 0]
+	var lanci := 0
 	for partita in 30:
 		var d := Dice.new(1000 + partita)
 		var g := HexGrid.new()
@@ -66,10 +84,12 @@ func _ready() -> void:
 			CharacterBuilder.png(d, "Tobia", 0, "Halfling", ["MD", "AG", "EN", "PS", "WP", "MA"], "short_sword", 1, "Leather", "", -1, "sling", 2),
 			CharacterBuilder.png(d, "Capobanda", 1, "Human", ["PS", "MD", "EN", "AG", "WP", "MA"], "broadsword", 2, "Chainmail", "Small Round Shield", 1),
 			CharacterBuilder.png(d, "Orco", 1, "Orc", ["PS", "EN", "MD", "AG", "WP", "MA"], "scimitar", 1, "Leather"),
-			CharacterBuilder.png(d, "Balestriere", 1, "Human", ["MD", "AG", "EN", "PS", "WP", "MA"], "dagger", 1, "Leather", "", -1, "crossbow", 1)]
+			CharacterBuilder.png(d, "Balestriere", 1, "Human", ["MD", "AG", "EN", "PS", "WP", "MA"], "dagger", 1, "Leather", "", -1, "crossbow", 1),
+			CharacterBuilder.adept(d, "Ariella", 0, "Human", [36, 44, 45, 40][partita % 4], [{"S-2": 3, "G-3": 2}, {"S-3": 3, "S-1": 2}, {"S-1": 3, "S-4": 2}, {"S-7": 2, "S-13": 2}][partita % 4], "quarterstaff", 1, "Leather", "Star Mage"),
+			CharacterBuilder.adept(d, "Stregone", 1, "Human", [42, 37, 43, 38][partita % 4], [{"S-2": 3, "S-3": 1}, {"S-1": 2, "S-7": 2}, {"S-1": 3, "S-4": 1}, {"G-1": 3}][partita % 4], "quarterstaff", 1, "Leather")]
 		for i in squadre.size():
 			var f: Fighter = squadre[i]
-			f.hex = HexGrid.offset_ad_assiale(2 if f.lato == 0 else 14, 3 + 2 * (i % 3))
+			f.hex = HexGrid.offset_ad_assiale(2 if f.lato == 0 else 14, 2 + 2 * (i % 4))
 			f.facing = 0 if f.lato == 0 else 3
 			if f.ha_arma_distanza():
 				f.preparata = "distanza"
@@ -87,8 +107,12 @@ func _ready() -> void:
 				_:
 					c.passo()
 		verifica(c.fase == "fine", "Partita %d finita in %d Pulse (vince lato %d)" % [partita + 1, c.pulse, c.vincitore])
+		for r in c.registro:
+			if String(r).contains(" lancia "):
+				lanci += 1
 		if c.vincitore >= 0:
 			vittorie[c.vincitore] += 1
 	print("Vittorie giocatore/nemici: ", vittorie)
+	verifica(lanci > 30, "Incantesimi lanciati nelle partite: %d" % lanci)
 	print("ERRORI: ", errori)
 	get_tree().quit(1 if errori > 0 else 0)
