@@ -1,0 +1,10 @@
+{
+  "titolo": "DragonQuest",
+  "sottotitolo": "l'arena del gioco di ruolo SPI/TSR",
+  "descrizione": "Il gioco di ruolo cult della SPI (3a edizione TSR) in versione digitale: crea il tuo avventuriero con le regole del Libro Primo e portalo nell'arena tattica a esagoni, con Pulse da 5 secondi, iniziativa, cariche, schivate con parata e Riposte, Fatica e Resistenza e la terribile tabella delle ferite gravi. Prototipo: per ora arena contro avversari IA.",
+  "online": false,
+  "sezione": "conversione",
+  "ordine": 230,
+  "bgg": 2006,
+  "generi": ["Gioco di ruolo"]
+}

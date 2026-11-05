@@ -4,3 +4,4 @@ export/
 godot
 *.zip
 test.log
+build/
