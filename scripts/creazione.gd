@@ -336,7 +336,7 @@ func _riga_incantesimo(v: Dictionary, generale: bool) -> Control:
 	l.tooltip_text = "%s\nBase Chance %s  Moltiplicatore XP %s\n%s" % [v["name"], str(bc) if bc != null else "-", str(v.get("experience_multiple", "-")), String(v.get("effects", v.get("text", ""))).substr(0, 600)]
 	l.mouse_filter = Control.MOUSE_FILTER_PASS
 	if combat:
-		l.add_theme_color_override("font_color", m.COL_ORO)
+		l.add_theme_color_override("font_color", Color(0.85, 0.70, 0.35))
 	riga.add_child(l)
 	if v["type"] != "talento" and v.get("experience_multiple") != null:
 		var s: SpinBox = m.spin(0, 20, 0)

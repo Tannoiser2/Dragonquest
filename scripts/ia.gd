@@ -71,7 +71,7 @@ static func magia(c: Combat, f: Fighter, ids: Array) -> bool:
 		return false
 	# serve almeno un bersaglio possibile, altrimenti si avvicina
 	f.preparato = scelta
-	var ok := not Magia.bersagli(c, f).filter(func(h):
+	var ok: bool = not Magia.bersagli(c, f).filter(func(h):
 		var g := c.figura_in(h)
 		return g != null and g.lato != f.lato).is_empty() or Magia.spec(f, scelta).get("bersaglio", "") == "se_stesso"
 	f.preparato = ""
